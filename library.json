@@ -1,0 +1,22 @@
+{
+  "name": "Enterprise_Wireless",
+  "keywords": "ncd, Enterprise_Wireless, gateway",
+  "description": "Data packet parser for enterprise wireless devices on NCD Wireless Gateways",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/telliottosceola/ESP32_Gateway_Enterprise_Wireless.git"
+  },
+  "authors":
+  [
+    {
+      "name": "Travis Elliott",
+      "email": "travis@ncd.io",
+      "url": "http://ncd.io",
+      "maintainer": true
+    }
+  ],
+  "version": "1.0.0",
+  "frameworks": "arduino",
+  "platforms": "*"
+}
