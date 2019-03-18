@@ -240,7 +240,7 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
         json["SKU"] = "";
       }
       //Current Monitor
-      dataObject["lux"] = (float)(((data[9]<<16)+(data[10]<<8)+data[11])/1000.00);
+      dataObject["Current"] = (float)(((data[9]<<16)+(data[10]<<8)+data[11])/1000.00);
       rDevice = true;
       break;
     }
