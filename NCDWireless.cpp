@@ -244,6 +244,27 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       rDevice = true;
       break;
     }
+    case(14):{
+      Serial.printf("4-20mA sensor transmission, length of packet: %i\n", len);
+      for(int i = 0; i < len; i++){
+        Serial.printf("%02X ", data[i]);
+      }
+      Serial.println();
+      if(len < 13){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "4-20mA Current Receiver";
+        json["SKU"] = "";
+      }
+      int rawADC = (data[9]<<8)+data[10];
+      Serial.printf("Raw ADC: %i\n", rawADC);
+      float mA = (float)(rawADC*(20.00/998));
+      dataObject["mA"] = mA;
+      Serial.printf("mA: %0.2f\n", mA);
+      rDevice = true;
+      break;
+    }
     case(24):{
       if(len < 17){
         return false;
