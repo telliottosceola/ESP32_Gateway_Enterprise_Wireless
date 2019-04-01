@@ -231,6 +231,26 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       rDevice = true;
       break;
     }
+    case(12):{
+      if(len<21){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "3 Channel Thermocouple";
+        json["SKU"] = "";
+      }
+      int32_t unconvertedOne = ((data[9]<<24)+(data[10]<<16)+(data[11]<<8)+data[12]);
+      dataObject["Channel 1"] = (float)(unconvertedOne/100.00);
+
+      int32_t unconvertedTwo = ((data[13]<<24)+(data[14]<<16)+(data[15]<<8)+data[16]);
+      dataObject["Channel 2"] = (float)(unconvertedTwo/100.00);
+
+      int32_t unconvertedThree = ((data[17]<<24)+(data[18]<<16)+(data[19]<<8)+data[20]);
+      dataObject["Channel 3"] = (float)(unconvertedThree/100.00);
+      
+      rDevice = true;
+      break;
+    }
     case(13):{
       if(len < 12){
         return false;
