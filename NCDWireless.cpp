@@ -1,5 +1,10 @@
 #include <NCDWireless.h>
 
+union sfp32bit {
+  byte b[4];
+  int result;
+} tval32;
+
 union sfp24bit {
   byte b[4];
   long result;
@@ -11,6 +16,13 @@ union sfp16bit {
 } tval16;
 
 int signedInt(uint8_t* data, int start, int bits){
+  if(bits == 32){
+    tval32.b[3] = data[start]; // low byte
+    tval32.b[2] = data[start+1]; // middle byte
+    tval32.b[1] = data[start+2]; // high byte
+    tval32.b[0] = data[start+3];
+    return tval32.result;
+  }
   if(bits == 24){
     tval24.b[3] = data[start]; // low byte
     tval24.b[2] = data[start+1]; // middle byte
@@ -265,11 +277,6 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       break;
     }
     case(14):{
-      Serial.printf("4-20mA sensor transmission, length of packet: %i\n", len);
-      for(int i = 0; i < len; i++){
-        Serial.printf("%02X ", data[i]);
-      }
-      Serial.println();
       if(len < 13){
         return false;
       }
@@ -282,6 +289,61 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       float mA = (float)(rawADC*(20.00/998));
       dataObject["mA"] = mA;
       Serial.printf("mA: %0.2f\n", mA);
+      rDevice = true;
+      break;
+    }
+    case(15):{
+      if(len < 11){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "10-Bit 1-Channel ADC";
+        json["SKU"] = "";
+      }
+      uint16_t raw = ((data[9]<<8)+data[10]);
+      dataObject["Raw ADC"] = raw;
+      dataObject["Voltage"] = (float)(raw*0.00322265625);
+      rDevice = true;
+      break;
+    }
+    case(19):{
+      if(len < 15){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "2 channel 24-bit Current Monitor";
+        json["SKU"] = "";
+      }
+      dataObject["channel_1_milliamps"] = (float)(((data[9]<<16)+(data[10]<<8)+data[11]));
+      dataObject["channel_2_milliamps"] = (float)(((data[12]<<16)+(data[13]<<8)+data[14]));
+      dataObject["channel_1_amps"] = (float)(((data[9]<<16)+(data[10]<<8)+data[11])/1000);
+      dataObject["channel_2_amps"] = (float)(((data[12]<<16)+(data[13]<<8)+data[14])/1000);
+      rDevice = true;
+      break;
+    }
+    case(20):{
+      if(len < 15){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "Precision Pressure & Temperature";
+        json["SKU"] = "";
+      }
+      dataObject["pressure_pascal"] = (float)(signedInt(data, 9, 32)/1000.00);
+      dataObject["temperature_c"] = (float)(signedInt(data, 13, 16)/100.00);
+      rDevice = true;
+      break;
+    }
+    case(21):{
+      if(len<13){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "AMS Pressure & Temperature";
+        json["SKU"] = "";
+      }
+      dataObject["pressure_psi"] = (float)(signedInt(data, 9, 16)/100.00);
+      dataObject["temperature_c"] = (float)(signedInt(data, 11, 16)/100.00);
       rDevice = true;
       break;
     }
