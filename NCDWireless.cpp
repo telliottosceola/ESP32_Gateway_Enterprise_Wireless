@@ -60,9 +60,9 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
 
   bool rDevice = false;
 
-  if(sensorType == 40){
-    return false;
-  }
+  // if(sensorType == 40){
+  //   return false;
+  // }
 
   switch(sensorType){
     case(1):{
@@ -247,7 +247,7 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
 
       int32_t unconvertedThree = ((data[17]<<24)+(data[18]<<16)+(data[19]<<8)+data[20]);
       dataObject["Channel 3"] = (float)(unconvertedThree/100.00);
-      
+
       rDevice = true;
       break;
     }
@@ -378,6 +378,27 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       dataObject["input_7"] = (data[9]&64)?1:0;
       dataObject["adc_1"] = (data[10]<<8)+data[11];
       dataObject["adc_2"] = (data[12]<<8)+data[13];
+      rDevice = true;
+      break;
+    }
+    case(40):{
+      if(len < 38){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "Vibration V2 MEMS";
+        json["SKU"] = "";
+      }
+      dataObject["rms_x"] = (float)(signedInt(data, 9, 24)/100.00);
+      dataObject["rms_y"] = (float)(signedInt(data, 12, 24)/100.00);
+      dataObject["rms_z"] = (float)(signedInt(data, 15, 24)/100.00);
+      dataObject["max_x"] = (float)(signedInt(data, 18, 24)/100.00);
+      dataObject["max_y"] = (float)(signedInt(data, 21, 24)/100.00);
+      dataObject["max_z"] = (float)(signedInt(data, 24, 24)/100.00);
+      dataObject["min_x"] = (float)(signedInt(data, 27, 24)/100.00);
+      dataObject["min_y"] = (float)(signedInt(data, 30, 24)/100.00);
+      dataObject["min_z"] = (float)(signedInt(data, 33, 24)/100.00);
+      dataObject["temperature"] = (int16_t)(data[36]<<8)+data[37];
       rDevice = true;
       break;
     }
