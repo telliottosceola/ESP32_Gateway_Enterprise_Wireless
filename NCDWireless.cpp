@@ -306,6 +306,35 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       rDevice = true;
       break;
     }
+    case(16):{
+      if(len < 13){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "Soil Moisture Sensor";
+        json["SKU"] = "PR55-2B";
+      }
+      uint16_t raw = ((data[9]<<8)+data[10]);
+      if(raw >= 870){
+        dataObject["Moisture"] = (float)100.00;
+      }else{
+        dataObject["Moisture"] = (float)(raw/870.00);
+      }
+      rDevice = true;
+      break;
+    }
+    case(17):{
+      if(len < 12){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "AC Voltage Monitor";
+        json["SKU"] = "PR52-13";
+      }
+      dataObject["voltage"] = (float)(((data[9]<<16)+(data[10]<<8)+data[11])/1000.00);
+      rDevice = true;
+      break;
+    }
     case(18):{
       if(len < 14){
         return false;
@@ -473,6 +502,18 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       rDevice = true;
       break;
     }
+    case(39):{
+      if(len < 13){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "RTD Temperature Sensor";
+        json["SKU"] = "PR55-27";
+      }
+      dataObject["Temperature Celsius"] = (float)(signedInt(data, 9, 32)/100.00);
+      rDevice = true;
+      break;
+    }
     case(40):{
       if(len < 38){
         return false;
@@ -491,6 +532,19 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       dataObject["min_y"] = (float)(signedInt(data, 30, 24)/100.00);
       dataObject["min_z"] = (float)(signedInt(data, 33, 24)/100.00);
       dataObject["temperature"] = (int16_t)(data[36]<<8)+data[37];
+      rDevice = true;
+      break;
+    }
+    case(41):{
+      if(len < 13){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "RPM Proximity Sensor";
+        json["SKU"] = "";
+      }
+      dataObject["Base"] = (int16_t)((data[9]<<8)+data[10]);
+      dataObject["RPM"] = (int16_t)((data[11]<<8)+data[12]);
       rDevice = true;
       break;
     }
