@@ -454,6 +454,23 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
         rDevice = true;
         break;
     }
+    case(28):{
+      if(len < 18){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "3 channel 24-bit Current Monitor";
+        json["SKU"] = "";
+      }
+      dataObject["channel_1_milliamps"] = (float)(((data[9]<<16)+(data[10]<<8)+data[11]));
+      dataObject["channel_2_milliamps"] = (float)(((data[12]<<16)+(data[13]<<8)+data[14]));
+      dataObject["channel_3_milliamps"] = (float)(((data[15]<<16)+(data[16]<<8)+data[17]));
+      dataObject["channel_1_amps"] = (float)(((data[9]<<16)+(data[10]<<8)+data[11])/1000);
+      dataObject["channel_2_amps"] = (float)(((data[12]<<16)+(data[13]<<8)+data[14])/1000);
+      dataObject["channel_3_amps"] = (float)(((data[15]<<16)+(data[16]<<8)+data[17])/1000);
+      rDevice = true;
+      break;
+    }
     case(35):{
       if(len < 13){
         return false;
