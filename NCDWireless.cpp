@@ -471,6 +471,19 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       rDevice = true;
       break;
     }
+    case(29):{
+      if(len < 11){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "Linear Displacement Sensor";
+        json["SKU"] = "";
+      }
+      uint16_t raw = ((data[9]<<8)+data[10]);
+      dataObject["movement"] = (float)(raw/1023.00)*100.00;
+      rDevice = true;
+      break;
+    }
     case(35):{
       if(len < 13){
         return false;
