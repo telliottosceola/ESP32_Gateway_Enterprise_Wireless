@@ -480,7 +480,7 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
         json["SKU"] = "";
       }
       uint16_t raw = ((data[9]<<8)+data[10]);
-      dataObject["movement"] = (float)(raw/1023.00)*100.00;
+      dataObject["position"] = (float)(raw/1023.00)*100.00;
       rDevice = true;
       break;
     }
