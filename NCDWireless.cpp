@@ -389,6 +389,18 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       rDevice = true;
       break;
     }
+    case(22):{
+      if(len<10){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "Voltage Detection Input";
+        json["SKU"] = "";
+      }
+      dataObject["Input"] = data[9];
+      rDevice = true;
+      break;
+    }
     case(23):{
       if(len<21){
         return false;
@@ -435,6 +447,19 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       dataObject["acc_y"] = signedInt(data, 11, 16);
       dataObject["acc_z"] = signedInt(data, 13, 16);
       dataObject["temp_change"] = signedInt(data, 15, 16);
+      rDevice = true;
+      break;
+    }
+    case(26):{
+      if(len < 15){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "Pressure & Temperature Sensor(PSI)";
+        json["SKU"] = "";
+      }
+      dataObject["Pressure PSI"] = (float)(signedInt(data, 9, 32)/100.00);
+      dataObject["Temperature Celsius"] = (float)(signedInt(data, 13, 16)/100.00);
       rDevice = true;
       break;
     }
