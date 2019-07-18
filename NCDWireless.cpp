@@ -616,6 +616,29 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       rDevice = true;
       break;
     }
+    case(50):{
+      if(len < 45){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "Predictive Maintenance Sensor";
+        json["SKU"] = "";
+      }
+      dataObject["RMSX"] = (float)(signedInt(data, 9, 24))/100000.00;
+      dataObject["RMSY"] = (float)(signedInt(data, 12, 24))/100000.00;
+      dataObject["RMSZ"] = (float)(signedInt(data, 15, 24))/100000.00;
+      dataObject["MAXX"] = (float)(signedInt(data, 18, 24))/100000.00;
+      dataObject["MAXY"] = (float)(signedInt(data, 21, 24))/100000.00;
+      dataObject["MAXZ"] = (float)(signedInt(data, 24, 24))/100000.00;
+      dataObject["MINX"] = (float)(signedInt(data, 27, 24))/100000.00;
+      dataObject["MINY"] = (float)(signedInt(data, 30, 24))/100000.00;
+      dataObject["MINZ"] = (float)(signedInt(data, 33, 24))/100000.00;
+      dataObject["Vibration_Celsius"] = (float)(signedInt(data, 36, 16));
+      dataObject["Thermocouple_Celsius"] = (float)(signedInt(data,38,32))/100.00;
+      dataObject["Current"] = (float)(signedInt(data, 42, 24))/1000.00;
+      rDevice = true;
+      break;
+    }
     case(10006):{
       if(len < 17){
         return false;
