@@ -357,9 +357,9 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
         json["SKU"] = "";
       }
       dataObject["channel_1_milliamps"] = (float)(((data[9]<<16)+(data[10]<<8)+data[11]));
-      dataObject["channel_2_milliamps"] = (float)(((data[12]<<16)+(data[13]<<8)+data[14]));
+      dataObject["channel_2_milliamps"] = (float)(((data[13]<<16)+(data[14]<<8)+data[15]));
       dataObject["channel_1_amps"] = (float)(((data[9]<<16)+(data[10]<<8)+data[11])/1000);
-      dataObject["channel_2_amps"] = (float)(((data[12]<<16)+(data[13]<<8)+data[14])/1000);
+      dataObject["channel_2_amps"] = (float)(((data[13]<<16)+(data[14]<<8)+data[15])/1000);
       rDevice = true;
       break;
     }
