@@ -7,13 +7,19 @@ union sfp32bit {
 
 union sfp24bit {
   byte b[4];
-  long result;
+  int result;
 } tval24;
 
 union sfp16bit {
   byte b[2];
   int16_t result;
 } tval16;
+
+int32_t sign_extend_24_32(int32_t x) {
+  const int bits = 24;
+  uint32_t m = 1u << (bits - 1);
+  return (x ^ m) - m;
+}
 
 int signedInt(uint8_t* data, int start, int bits){
   if(bits == 32){
@@ -24,11 +30,9 @@ int signedInt(uint8_t* data, int start, int bits){
     return tval32.result;
   }
   if(bits == 24){
-    tval24.b[3] = data[start]; // low byte
-    tval24.b[2] = data[start+1]; // middle byte
-    tval24.b[1] = data[start+2]; // high byte
-    tval24.b[0] = (data[start+2] & 0x80 ? 0xFF : 0);
-    return tval24.result;
+    int prior = ((data[start])<<16)+(data[start+1]<<8)+(data[start+2]);
+    int result = sign_extend_24_32(prior);
+    return result;
   }
   if(bits == 16){
     tval16.b[1] = data[start];
