@@ -5,7 +5,7 @@
 
 class NCDWireless{
 public:
-  bool parseData(uint8_t* data, int len, JsonObject& json, bool newDevice);
+  bool parseData(uint8_t* data, int len, JsonObject& json, bool newDevice, bool addNodeID = true, bool addBatteryLevel = true);
   bool newDevice(uint8_t* data, int len, JsonObject& json);
 
 private:

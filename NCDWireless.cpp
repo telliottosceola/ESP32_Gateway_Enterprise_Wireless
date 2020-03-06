@@ -41,7 +41,7 @@ int signedInt(uint8_t* data, int start, int bits){
   }
 }
 
-bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDevice){
+bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDevice, bool addNodeID, bool addBatteryLevel){
   if(data[0] != 127){
     return false;
   }
@@ -57,9 +57,13 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
   int counter = data[5];
   int sensorType = (data[6]<<8)+data[7];
   dataObject["transmission_count"] = counter;
-  dataObject["battery_level"] = battery;
+  if(addBatteryLevel){
+    dataObject["battery_level"] = battery;
+  }
   dataObject["type"] = sensorType;
-  dataObject["node_id"] = nodeID;
+  if(addNodeID){
+    dataObject["node_id"] = nodeID;
+  }
 
   unsigned long pulseWidth = pulseIn(rssiPin, HIGH, 250);
   if(pulseWidth == 0){
@@ -414,10 +418,10 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
         json["SKU"] = "";
       }
       int32_t unconvertedOne = ((data[9]<<24)+(data[10]<<16)+(data[11]<<8)+data[12]);
-      dataObject["Channel 1"] = (float)(unconvertedOne/100.00);
+      dataObject["Channel_1"] = (float)(unconvertedOne/100.00);
 
       int32_t unconvertedTwo = ((data[13]<<24)+(data[14]<<16)+(data[15]<<8)+data[16]);
-      dataObject["Channel 2"] = (float)(unconvertedTwo/100.00);
+      dataObject["Channel_2"] = (float)(unconvertedTwo/100.00);
 
       rDevice = true;
       break;
@@ -526,6 +530,55 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       rDevice = true;
       break;
     }
+
+    case(31):{
+      if(len < 21){
+        Serial.printf("Packet length for TVOC sensor was: %i\n",len);
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "TVOC CO2eq Temperature Humidity";
+        json["SKU"] = "";
+      }
+      uint16_t rawHumidity = ((data[9]<<8)+data[10]);
+      dataObject["humidity"] = (float)rawHumidity/100.00;
+
+      dataObject["temperature"] = (float)(signedInt(data, 11, 16) / 100.00);
+      dataObject["co2eq"] = signedInt(data, 13, 16);
+      dataObject["tvoc"] = signedInt(data, 15, 16);
+      dataObject["raw_h2"] = signedInt(data, 17, 16);
+      dataObject["raw_ethanol"] = signedInt(data, 19, 16);
+      rDevice = true;
+      break;
+    }
+
+    case(32):{
+      Serial.println("Particulate matter sensor transmission, sensor type 32");
+      Serial.printf("Length of data:%i\n",len);
+      Serial.print("Received data: ");
+      for(int i = 9; i < len; i++){
+        Serial.printf("%02X ",data[i]);
+      }
+      Serial.println();
+      if(len < 53){
+        return false;
+      }
+      dataObject["mass_concentration_pm_1.0"] = float(((data[9]<<24)+(data[10]<<16)+(data[11]<<8)+data[12])/100.00);
+      dataObject["mass_concentration_pm_2.5"] = float(((data[13]<<24)+(data[14]<<16)+(data[15]<<8)+data[16])/100.00);
+      dataObject["mass_concentration_pm_4.0"] = float(((data[17]<<24)+(data[18]<<16)+(data[19]<<8)+data[20])/100.00);
+      dataObject["mass_concentration_pm_10.0"] = float(((data[21]<<24)+(data[22]<<16)+(data[23]<<8)+data[24])/100.00);
+      dataObject["number_concentration_pm_0.5"] = float(((data[25]<<24)+(data[26]<<16)+(data[27]<<8)+data[28])/100.00);
+      dataObject["number_concentration_pm_1.0"] = float(((data[29]<<24)+(data[30]<<16)+(data[31]<<8)+data[32])/100.00);
+      dataObject["number_concentration_pm_2.5"] = float(((data[33]<<24)+(data[34]<<16)+(data[35]<<8)+data[36])/100.00);
+      dataObject["number_concentration_pm_4.0"] = float(((data[37]<<24)+(data[38]<<16)+(data[39]<<8)+data[40])/100.00);
+      dataObject["number_concentration_pm_10.0"] = float(((data[41]<<24)+(data[42]<<16)+(data[43]<<8)+data[44])/100.00);
+      dataObject["typical_particle_size"] = float(((data[45]<<24)+(data[46]<<16)+(data[47]<<8)+data[48])/100.0);
+      dataObject["humidity"] = float(((data[49]*256)+data[50])/100.00);
+      dataObject["temperature"] = (float)(signedInt(data, 51, 16) / 100.00);
+      rDevice = true;
+      break;
+    }
+
     case(35):{
       if(len < 13){
         return false;
@@ -575,6 +628,7 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       break;
     }
     case(39):{
+      Serial.println("Transmission from RTD");
       if(len < 13){
         return false;
       }
@@ -582,7 +636,7 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
         json["Type"] = "RTD Temperature Sensor";
         json["SKU"] = "PR55-27";
       }
-      dataObject["Temperature Celsius"] = (float)(signedInt(data, 9, 32)/100.00);
+      dataObject["temperature_celsius"] = (float)(signedInt(data, 9, 32)/100.00);
       rDevice = true;
       break;
     }
@@ -620,6 +674,23 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       rDevice = true;
       break;
     }
+    case(43):{
+      if(len < 19){
+        Serial.println("Sensor packet too short");
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "Dual Temperature Humidity Current Detect Sensor";
+        json["SKU"] = "";
+      }
+      dataObject["current_detection"] = (int)data[9];
+      dataObject["humidity_one"] = (float)((((data[11]) * 256) + data[12]) /100.0);
+      dataObject["temperature_one"] = (float)(signedInt(data, 13, 16)/100.00);
+      dataObject["humidity_two"] = (float)((((data[15]) * 256) + data[16]) /100.0);
+      dataObject["temperature_two"] = (float)(signedInt(data, 17, 16)/100.00);
+      rDevice = true;
+      break;
+    }
     case(50):{
       if(len < 45){
         return false;
@@ -628,15 +699,15 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
         json["Type"] = "Predictive Maintenance Sensor";
         json["SKU"] = "";
       }
-      dataObject["RMSX"] = (float)(signedInt(data, 9, 24))/100000.00;
-      dataObject["RMSY"] = (float)(signedInt(data, 12, 24))/100000.00;
-      dataObject["RMSZ"] = (float)(signedInt(data, 15, 24))/100000.00;
-      dataObject["MAXX"] = (float)(signedInt(data, 18, 24))/100000.00;
-      dataObject["MAXY"] = (float)(signedInt(data, 21, 24))/100000.00;
-      dataObject["MAXZ"] = (float)(signedInt(data, 24, 24))/100000.00;
-      dataObject["MINX"] = (float)(signedInt(data, 27, 24))/100000.00;
-      dataObject["MINY"] = (float)(signedInt(data, 30, 24))/100000.00;
-      dataObject["MINZ"] = (float)(signedInt(data, 33, 24))/100000.00;
+      dataObject["rms_x"] = (float)(signedInt(data, 9, 24))/10.00;
+      dataObject["rms_y"] = (float)(signedInt(data, 12, 24))/10.00;
+      dataObject["rms_z"] = (float)(signedInt(data, 15, 24))/10.00;
+      dataObject["max_x"] = (float)(signedInt(data, 18, 24))/10.00;
+      dataObject["max_y"] = (float)(signedInt(data, 21, 24))/10.00;
+      dataObject["max_z"] = (float)(signedInt(data, 24, 24))/10.00;
+      dataObject["min_x"] = (float)(signedInt(data, 27, 24))/10.00;
+      dataObject["min_y"] = (float)(signedInt(data, 30, 24))/10.00;
+      dataObject["min_z"] = (float)(signedInt(data, 33, 24))/10.00;
       dataObject["Vibration_Celsius"] = (float)(signedInt(data, 36, 16));
       dataObject["Thermocouple_Celsius"] = (float)(signedInt(data,38,32))/100.00;
       dataObject["Current"] = (float)(signedInt(data, 42, 24))/1000.00;
