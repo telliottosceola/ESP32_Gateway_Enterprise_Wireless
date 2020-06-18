@@ -260,13 +260,13 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
         json["SKU"] = "";
       }
       int32_t unconvertedOne = ((data[9]<<24)+(data[10]<<16)+(data[11]<<8)+data[12]);
-      dataObject["Channel 1"] = (float)(unconvertedOne/100.00);
+      dataObject["Channel_1"] = (float)(unconvertedOne/100.00);
 
       int32_t unconvertedTwo = ((data[13]<<24)+(data[14]<<16)+(data[15]<<8)+data[16]);
-      dataObject["Channel 2"] = (float)(unconvertedTwo/100.00);
+      dataObject["Channel_2"] = (float)(unconvertedTwo/100.00);
 
       int32_t unconvertedThree = ((data[17]<<24)+(data[18]<<16)+(data[19]<<8)+data[20]);
-      dataObject["Channel 3"] = (float)(unconvertedThree/100.00);
+      dataObject["Channel_3"] = (float)(unconvertedThree/100.00);
 
       rDevice = true;
       break;
@@ -674,6 +674,18 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       rDevice = true;
       break;
     }
+    case(42):{
+      if(len < 13){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "0-24 Voltage Monitor";
+        json["SKU"] = "";
+      }
+      dataObject["Voltage"] = (float)(((int16_t)((data[9]<<8)+data[10]))* 0.02742);
+      rDevice = true;
+      break;
+    }
     case(43):{
       if(len < 19){
         Serial.println("Sensor packet too short");
@@ -688,6 +700,37 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       dataObject["temperature_one"] = (float)(signedInt(data, 13, 16)/100.00);
       dataObject["humidity_two"] = (float)((((data[15]) * 256) + data[16]) /100.0);
       dataObject["temperature_two"] = (float)(signedInt(data, 17, 16)/100.00);
+      rDevice = true;
+      break;
+    }
+    case(44):{
+      if(len < 17){
+        Serial.println("Sensor packet too short");
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "CO2 Temperature Humidity Sensor";
+        json["SKU"] = "PR52-33Q";
+      }
+      dataObject["co2"] = (float)((((data[9])<<24) + (data[10]<<16)+(data[11]<<8) + data[12])  /100.0);
+      dataObject["humidity"] = (float)(((data[13])<<8)| data[14]) /100.0;
+      dataObject["temperature"] = (float)(((data[15])<<8)| data[16]) /100.0;
+      rDevice = true;
+      break;
+    }
+    case(45):{
+      if(len < 13){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "4-20mA Current Receiver Industrial";
+        json["SKU"] = "";
+      }
+      int rawADC = (data[9]<<8)+data[10];
+      Serial.printf("Raw ADC: %i\n", rawADC);
+      float mA = (float)(rawADC * 0.0006934);
+      dataObject["mA"] = mA;
+      Serial.printf("mA: %0.2f\n", mA);
       rDevice = true;
       break;
     }
@@ -711,6 +754,20 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       dataObject["Vibration_Celsius"] = (float)(signedInt(data, 36, 16));
       dataObject["Thermocouple_Celsius"] = (float)(signedInt(data,38,32))/100.00;
       dataObject["Current"] = (float)(signedInt(data, 42, 24))/1000.00;
+      rDevice = true;
+      break;
+    }
+    case(61):{
+      if(len < 15){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "pH Sensor";
+        json["SKU"] = "";
+      }
+      dataObject["pH"] = float(((data[9]<<24)+(data[10]<<16)+(data[11]<<8)+data[12])/1000.00);
+      int16_t unconverted = (data[13]<<8)+data[14];
+      dataObject["temperature"] = (float)(unconverted/100.00);
       rDevice = true;
       break;
     }
