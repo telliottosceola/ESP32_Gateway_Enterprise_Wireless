@@ -466,8 +466,8 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
         json["Type"] = "Pressure & Temperature Sensor(PSI)";
         json["SKU"] = "";
       }
-      dataObject["Pressure PSI"] = (float)(signedInt(data, 9, 32)/100.00);
-      dataObject["Temperature Celsius"] = (float)(signedInt(data, 13, 16)/100.00);
+      dataObject["Pressure_PSI"] = (float)(signedInt(data, 9, 32)/100.00);
+      dataObject["Temperature_Celsius"] = (float)(signedInt(data, 13, 16)/100.00);
       rDevice = true;
       break;
     }
@@ -496,11 +496,11 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
         json["SKU"] = "";
       }
       dataObject["channel_1_milliamps"] = (float)(((data[9]<<16)+(data[10]<<8)+data[11]));
-      dataObject["channel_2_milliamps"] = (float)(((data[12]<<16)+(data[13]<<8)+data[14]));
-      dataObject["channel_3_milliamps"] = (float)(((data[15]<<16)+(data[16]<<8)+data[17]));
+      dataObject["channel_2_milliamps"] = (float)(((data[13]<<16)+(data[14]<<8)+data[15]));
+      dataObject["channel_3_milliamps"] = (float)(((data[17]<<16)+(data[18]<<8)+data[19]));
       dataObject["channel_1_amps"] = (float)(((data[9]<<16)+(data[10]<<8)+data[11])/1000);
-      dataObject["channel_2_amps"] = (float)(((data[12]<<16)+(data[13]<<8)+data[14])/1000);
-      dataObject["channel_3_amps"] = (float)(((data[15]<<16)+(data[16]<<8)+data[17])/1000);
+      dataObject["channel_2_amps"] = (float)(((data[13]<<16)+(data[14]<<8)+data[15])/1000);
+      dataObject["channel_3_amps"] = (float)(((data[17]<<16)+(data[18]<<8)+data[19])/1000);
       rDevice = true;
       break;
     }
@@ -530,7 +530,6 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       rDevice = true;
       break;
     }
-
     case(31):{
       if(len < 21){
         Serial.printf("Packet length for TVOC sensor was: %i\n",len);
@@ -551,7 +550,6 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       rDevice = true;
       break;
     }
-
     case(32):{
       Serial.println("Particulate matter sensor transmission, sensor type 32");
       Serial.printf("Length of data:%i\n",len);
@@ -563,22 +561,33 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       if(len < 53){
         return false;
       }
-      dataObject["mass_concentration_pm_1.0"] = float(((data[9]<<24)+(data[10]<<16)+(data[11]<<8)+data[12])/100.00);
-      dataObject["mass_concentration_pm_2.5"] = float(((data[13]<<24)+(data[14]<<16)+(data[15]<<8)+data[16])/100.00);
-      dataObject["mass_concentration_pm_4.0"] = float(((data[17]<<24)+(data[18]<<16)+(data[19]<<8)+data[20])/100.00);
-      dataObject["mass_concentration_pm_10.0"] = float(((data[21]<<24)+(data[22]<<16)+(data[23]<<8)+data[24])/100.00);
-      dataObject["number_concentration_pm_0.5"] = float(((data[25]<<24)+(data[26]<<16)+(data[27]<<8)+data[28])/100.00);
-      dataObject["number_concentration_pm_1.0"] = float(((data[29]<<24)+(data[30]<<16)+(data[31]<<8)+data[32])/100.00);
-      dataObject["number_concentration_pm_2.5"] = float(((data[33]<<24)+(data[34]<<16)+(data[35]<<8)+data[36])/100.00);
-      dataObject["number_concentration_pm_4.0"] = float(((data[37]<<24)+(data[38]<<16)+(data[39]<<8)+data[40])/100.00);
-      dataObject["number_concentration_pm_10.0"] = float(((data[41]<<24)+(data[42]<<16)+(data[43]<<8)+data[44])/100.00);
+      dataObject["mass_concentration_pm_1_0"] = float(((data[9]<<24)+(data[10]<<16)+(data[11]<<8)+data[12])/100.00);
+      dataObject["mass_concentration_pm_2_5"] = float(((data[13]<<24)+(data[14]<<16)+(data[15]<<8)+data[16])/100.00);
+      dataObject["mass_concentration_pm_4_0"] = float(((data[17]<<24)+(data[18]<<16)+(data[19]<<8)+data[20])/100.00);
+      dataObject["mass_concentration_pm_10_0"] = float(((data[21]<<24)+(data[22]<<16)+(data[23]<<8)+data[24])/100.00);
+      dataObject["number_concentration_pm_0_5"] = float(((data[25]<<24)+(data[26]<<16)+(data[27]<<8)+data[28])/100.00);
+      dataObject["number_concentration_pm_1_0"] = float(((data[29]<<24)+(data[30]<<16)+(data[31]<<8)+data[32])/100.00);
+      dataObject["number_concentration_pm_2_5"] = float(((data[33]<<24)+(data[34]<<16)+(data[35]<<8)+data[36])/100.00);
+      dataObject["number_concentration_pm_4_0"] = float(((data[37]<<24)+(data[38]<<16)+(data[39]<<8)+data[40])/100.00);
+      dataObject["number_concentration_pm_10_0"] = float(((data[41]<<24)+(data[42]<<16)+(data[43]<<8)+data[44])/100.00);
       dataObject["typical_particle_size"] = float(((data[45]<<24)+(data[46]<<16)+(data[47]<<8)+data[48])/100.0);
       dataObject["humidity"] = float(((data[49]*256)+data[50])/100.00);
       dataObject["temperature"] = (float)(signedInt(data, 51, 16) / 100.00);
       rDevice = true;
       break;
     }
-
+    case(34):{
+      if(len < 13){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "Tank Level Sensor";
+        json["SKU"] = "";
+      }
+      dataObject["level"] = (data[9]<<8)+data[10];
+      rDevice = true;
+      break;
+    }
     case(35):{
       if(len < 13){
         return false;
@@ -757,6 +766,77 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       rDevice = true;
       break;
     }
+    case(57):{
+      if(len<23){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "Soil Sensor";
+        json["SKU"] = "";
+      }
+      float soil_moisture =(((data[9] * 256) + data[10]));
+      dataObject["soil_moisture"] = soil_moisture/10.0;
+      float soil_temp =    float (((data[11] * 256) + data[12]));
+      dataObject["soil_temp"] = soil_temp/10.0;
+      dataObject["soil_EC"] = float(((data[13] * 256) + data[14]));
+      dataObject["soil_N"] = float(((data[15] * 256) + data[16]));
+      dataObject["soil_P"] = float(((data[17] * 256) + data[18]));
+      dataObject["soil_K"] = float(((data[19] * 256) + data[20]));
+      float soil_pH = float(((data[21] * 256) + data[22]));
+      dataObject["soil_pH"] = soil_pH/100.0;
+      rDevice = true;
+      break;
+    }
+    case(58):{
+      if(len<56){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "Mulit Level Soil Moisture Temperature EC pH NPK Sensor";
+        json["SKU"] = "";
+      }
+      float soil_moisture1 =(((data[9] * 256) + data[10]));
+      dataObject["soil_moisture1"] = soil_moisture1/10.0;
+      float soil_temp1 =    float (((data[11] * 256) + data[12]));
+      dataObject["soil_temp1"] = soil_temp1/10.0;
+      dataObject["soil_EC1"] = float(((data[13] * 256) + data[14]));
+      dataObject["soil_N1"] = float(((data[15] * 256) + data[16]));
+      dataObject["soil_P1"] = float(((data[17] * 256) + data[18]));
+      dataObject["soil_K1"] = float(((data[19] * 256) + data[20]));
+      dataObject["soil_sal1"] = float(((data[21] * 256) + data[22]));
+      //soil_sal1 = soil_sal1/100.0;
+      float soil_pH1 = float(((data[23] * 256) + data[24]));
+      dataObject["soil_pH1"] = soil_pH1/100.0;
+
+      float soil_moisture2 =(((data[25] * 256) + data[26]));
+      dataObject["soil_moisture2"] = soil_moisture2/10.0;
+      float soil_temp2 =    float (((data[27] * 256) + data[28]));
+      dataObject["soil_temp2"] = soil_temp2/10.0;
+      dataObject["soil_EC2"] = float(((data[29] * 256) + data[30]));
+      dataObject["soil_N2"] = float(((data[31] * 256) + data[32]));
+      dataObject["soil_P2"] = float(((data[33] * 256) + data[34]));
+      dataObject["soil_K2"] = float(((data[35] * 256) + data[36]));
+      dataObject["soil_sal2"] = float(((data[37] * 256) + data[38]));
+      // soil_sal2 = soil_sal2/100.0;
+      float soil_pH2 = float(((data[39] * 256) + data[40]));
+      dataObject["soil_pH2"] = soil_pH2/100.0;
+
+      float soil_moisture3 =(((data[41] * 256) + data[42]));
+      dataObject["soil_moisture3"] = soil_moisture3/10.0;
+      float soil_temp3 =    float (((data[43] * 256) + data[44]));
+      dataObject["soil_temp3"] = soil_temp3/10.0;
+      dataObject["soil_EC3"] = float(((data[45] * 256) + data[46]));
+      dataObject["soil_N3"] = float(((data[47] * 256) + data[48]));
+      dataObject["soil_P3"] = float(((data[49] * 256) + data[50]));
+      dataObject["soil_K3"] = float(((data[51] * 256) + data[52]));
+      dataObject["soil_sal3"] = float(((data[53] * 256) + data[54]));
+      //soil_sal3 = soil_sal3/100.0;
+      float soil_pH3 = float(((data[55] * 256) + data[56]));
+      dataObject["soil_pH3"] = soil_pH3/100.0;
+      rDevice = true;
+      break;
+    }
+
     case(61):{
       if(len < 15){
         return false;
@@ -771,6 +851,86 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       rDevice = true;
       break;
     }
+    case(63):{
+      Serial.println("New OPT/pH sensor transmission");
+      if(len < 17){
+        Serial.printf("Length too short, it was: %i\n", len);
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "ORP, pH, and Temperature Sensor";
+        json["SKU"] = "";
+      }
+      float ORP = (((data[9]) * 256) + data[10]);
+      int16_t cTempint_ORP = (((uint16_t)(data[11])<<8)| data[12]);
+      float pH = ((((data[13]) * 256) + data[14]) /100.0);
+      int16_t cTempint_pH = (((uint16_t)(data[15])<<8)| data[16]);
+
+      float cTemp_ORP = (float)cTempint_ORP /100.0;
+      float fTemp_ORP = cTemp_ORP * 1.8 + 32;
+      float cTemp_pH = (float)cTempint_pH /100.0;
+      float fTemp_pH = cTemp_pH * 1.8 + 32;
+
+      dataObject["solution_orp"] = ORP;
+      dataObject["temperature_orp"] = cTemp_ORP;
+      dataObject["solution_ph"] = pH;
+      dataObject["temperature_ph"] = cTemp_pH;
+
+      rDevice = true;
+      Serial.println("packet complete");
+      break;
+    }
+    case(502):{
+      if(newDevice){
+        json["Type"] = "Vibration/Gyro/Magneto/Temperature";
+        json["SKU"] = "";
+      }
+      //Vibration
+      dataObject["rms_x"] = (float)(signedInt(data, 9, 24)/100.00);
+      dataObject["rms_y"] = (float)(signedInt(data, 12, 24)/100.00);
+      dataObject["rms_z"] = (float)(signedInt(data, 15, 24)/100.00);
+      dataObject["max_x"] = (float)(signedInt(data, 18, 24)/100.00);
+      dataObject["max_y"] = (float)(signedInt(data, 21, 24)/100.00);
+      dataObject["max_z"] = (float)(signedInt(data, 24, 24)/100.00);
+      dataObject["min_x"] = (float)(signedInt(data, 27, 24)/100.00);
+      dataObject["min_y"] = (float)(signedInt(data, 30, 24)/100.00);
+      dataObject["min_z"] = (float)(signedInt(data, 33, 24)/100.00);
+      dataObject["temperature"] = (int16_t)(data[36]<<8)+data[37];
+      //Gyro/Magneto/Temperature
+      dataObject["accel_x"] = (float)(signedInt(data, 38, 24)/100.00);
+      dataObject["accel_y"] = (float)(signedInt(data, 41, 24)/100.00);
+      dataObject["accel_z"] = (float)(signedInt(data, 44, 24)/100.00);
+      dataObject["magneto_x"] = (float)(signedInt(data, 47, 24)/100.00);
+      dataObject["magneto_y"] = (float)(signedInt(data, 50, 24)/100.00);
+      dataObject["magneto_z"] = (float)(signedInt(data, 53, 24)/100.00);
+      dataObject["gyro_x"] = (float)(signedInt(data, 56, 24)/100.00);
+      dataObject["gyro_y"] = (float)(signedInt(data, 59, 24)/100.00);
+      dataObject["gyro_z"] = (float)(signedInt(data, 62, 24)/100.00);
+      dataObject["temperature"] = (int16_t)(data[65]<<8)+data[66];
+      rDevice = true;
+      break;
+    }
+    case(503):{
+      Serial.println("This is a 503 sensor");
+      if(len < 11){
+        Serial.printf("Packet too short, length is:%i\n",len);
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "4-20mA Current Receiver";
+        json["SKU"] = "";
+      }
+      int rawADC = (data[9]<<8)+data[10];
+      Serial.printf("Raw ADC: %i\n", rawADC);
+      float mA = (float)(rawADC/100.00);
+      char data[6];
+      sprintf(data,"%0.2f",mA);
+      dataObject["mA"] = data;
+      Serial.printf("mA: %0.2f\n", mA);
+      rDevice = true;
+      break;
+    }
+
     case(10006):{
       if(len < 17){
         return false;
@@ -821,6 +981,7 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
     }
   }
   if(!rDevice){
+    Serial.println("This is an unknown device");
     return false;
     char rawDataChar[((len-10)*3)+1];
     char *format = "%02X ";
@@ -846,7 +1007,7 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
   }
 }
 
-bool NCDWireless::newDevice(uint8_t* data, int len, JsonObject& json){
+bool NCDWireless::newDevice(uint8_t* data, int len, JsonObject& json, bool attributesOnly){
 
   if(data[0] != 127){
     return false;
@@ -857,6 +1018,26 @@ bool NCDWireless::newDevice(uint8_t* data, int len, JsonObject& json){
   dataObject.createNestedObject("data");
   if(!parseData(data, len, dataObject, true)){
     return false;
+  }
+  Serial.print("dataObject: ");
+  dataObject.printTo(Serial);
+  Serial.println();
+
+  Serial.print("JSON Object: ");
+  json.printTo(Serial);
+  Serial.println();
+
+  if(attributesOnly){
+    JsonArray& attributes = json["attributes"].as<JsonArray>();
+
+    JsonObject& attributesObject = dataObject["data"];
+
+    for(auto kvp : attributesObject){
+      JsonObject& attributeKVPObject = attributes.createNestedObject();
+      attributeKVPObject["name"] = kvp.key;
+      attributeKVPObject["dataType"] = "number";
+    }
+    return true;
   }
 
   int nodeID = data[1];
@@ -877,16 +1058,28 @@ bool NCDWireless::newDevice(uint8_t* data, int len, JsonObject& json){
   deviceTypeTag["key"] = "device_type_id";
   deviceTypeTag["value"] = String(sensorType);
 
-  json["description"] = dataObject["Type"];
-
   JsonArray& attributes = json["attributes"].as<JsonArray>();
 
   JsonObject& attributesObject = dataObject["data"];
+  json["description"] = String(attributesObject["type"].as<int>());
   for(auto kvp : attributesObject){
-    JsonObject& attributeKVPObject = attributes.createNestedObject();
-    attributeKVPObject["name"] = kvp.key;
-    attributeKVPObject["dataType"] = "number";
+    if(sensorType == 32){
+      if(memcmp(kvp.key, "device_type_id", sizeof(kvp.key) == 0)){
+        JsonObject& attributeKVPObject = attributes.createNestedObject();
+        attributeKVPObject["name"] = kvp.key;
+        attributeKVPObject["dataType"] = "number";
+        break;
+      }
+    }else{
+      JsonObject& attributeKVPObject = attributes.createNestedObject();
+      attributeKVPObject["name"] = kvp.key;
+      attributeKVPObject["dataType"] = "number";
+    }
   }
+  if(sensorType == 32){
+    Serial.println("New device packet built for type 32 sensor");
+  }
+
   #ifdef DEBUG
   Serial.println("newDevice ran");
   #endif
