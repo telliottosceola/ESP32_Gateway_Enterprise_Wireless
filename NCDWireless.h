@@ -10,6 +10,7 @@ public:
 
 private:
   int rssiPin = 21;
+  String lastHeardString = "[]";
 };
 
 #endif

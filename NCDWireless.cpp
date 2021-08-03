@@ -56,7 +56,10 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
   float battery = ((data[3]<<8)+data[4])*0.00322;
   int counter = data[5];
   int sensorType = (data[6]<<8)+data[7];
+  int reserveByte = data[8];
+  dataObject["firmware_version"] = firmware;
   dataObject["transmission_count"] = counter;
+  dataObject["reserve_byte"] = reserveByte;
   if(addBatteryLevel){
     dataObject["battery_level"] = battery;
   }
@@ -295,6 +298,7 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       int rawADC = (data[9]<<8)+data[10];
       Serial.printf("Raw ADC: %i\n", rawADC);
       float mA = (float)(rawADC*(20.00/998));
+      dataObject["raw_adc"] = rawADC;
       dataObject["mA"] = mA;
       Serial.printf("mA: %0.2f\n", mA);
       rDevice = true;
@@ -597,7 +601,7 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
         json["SKU"] = "";
       }
       //One Channel Counter
-      dataObject["count"] = (data[9]<<8)+data[10];
+      dataObject["count"] = (data[9]<<24)+(data[10]<<16)+(data[11]<<8)+data[12];
       rDevice = true;
       break;
     }
@@ -656,6 +660,11 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       if(newDevice){
         json["Type"] = "Vibration V2 MEMS";
         json["SKU"] = "";
+      }
+      if(reserveByte == 3){
+        dataObject["sensor_id"] = 2;
+      }else{
+        dataObject["sensor_id"] = 1;
       }
       dataObject["rms_x"] = (float)(signedInt(data, 9, 24)/100.00);
       dataObject["rms_y"] = (float)(signedInt(data, 12, 24)/100.00);
@@ -739,6 +748,37 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       Serial.printf("Raw ADC: %i\n", rawADC);
       float mA = (float)(rawADC * 0.0006934);
       dataObject["mA"] = mA;
+      dataObject["raw_adc"] = rawADC;
+      Serial.printf("mA: %0.2f\n", mA);
+      rDevice = true;
+      break;
+    }
+    case(46):{
+      if(len < 11){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "PIR Motion Detector";
+        json["SKU"] = "";
+      }
+      //Motion Detector
+      dataObject["motion"] = data[9];
+      rDevice = true;
+      break;
+    }
+    case(48):{
+      if(len < 13){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "4-20mA Current Loop Receiver Industrial";
+        json["SKU"] = "";
+      }
+      int rawADC = (data[9]<<8)+data[10];
+      Serial.printf("Raw ADC: %i\n", rawADC);
+      float mA = (float)(rawADC * 0.00063168);
+      dataObject["mA"] = mA;
+      dataObject["raw_adc"] = rawADC;
       Serial.printf("mA: %0.2f\n", mA);
       rDevice = true;
       break;
@@ -763,6 +803,50 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       dataObject["Vibration_Celsius"] = (float)(signedInt(data, 36, 16));
       dataObject["Thermocouple_Celsius"] = (float)(signedInt(data,38,32))/100.00;
       dataObject["Current"] = (float)(signedInt(data, 42, 24))/1000.00;
+      rDevice = true;
+      break;
+    }
+    case(52):{
+      if(len < 13){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "2 Channel 4-20mA Current Receiver Industrial";
+        json["SKU"] = "";
+      }
+      int rawADC = (data[9]<<8)+data[10];
+      Serial.printf("Raw ADC: %i\n", rawADC);
+      float mA = (float)(rawADC * 0.0006863);
+      dataObject["mA_1"] = mA;
+      dataObject["raw_adc_1"] = rawADC;
+      Serial.printf("mA: %0.2f\n", mA);
+
+      int rawADC_2 = (data[11]<<8)+data[12];
+      Serial.printf("Raw ADC: %i\n", rawADC_2);
+      float mA_2 = (float)(rawADC_2 * 0.0006863);
+      dataObject["mA_2"] = mA_2;
+      dataObject["raw_adc_2"] = rawADC_2;
+      Serial.printf("mA_2: %0.2f\n", mA_2);
+      rDevice = true;
+      break;
+    }
+    case(53):{
+      if(len < 57){
+        return false;
+      }
+      dataObject["mass_concentration_pm_1_0"] = float(((data[9]<<24)+(data[10]<<16)+(data[11]<<8)+data[12])/100.00);
+      dataObject["mass_concentration_pm_2_5"] = float(((data[13]<<24)+(data[14]<<16)+(data[15]<<8)+data[16])/100.00);
+      dataObject["mass_concentration_pm_4_0"] = float(((data[17]<<24)+(data[18]<<16)+(data[19]<<8)+data[20])/100.00);
+      dataObject["mass_concentration_pm_10_0"] = float(((data[21]<<24)+(data[22]<<16)+(data[23]<<8)+data[24])/100.00);
+      dataObject["number_concentration_pm_0_5"] = float(((data[25]<<24)+(data[26]<<16)+(data[27]<<8)+data[28])/100.00);
+      dataObject["number_concentration_pm_1_0"] = float(((data[29]<<24)+(data[30]<<16)+(data[31]<<8)+data[32])/100.00);
+      dataObject["number_concentration_pm_2_5"] = float(((data[33]<<24)+(data[34]<<16)+(data[35]<<8)+data[36])/100.00);
+      dataObject["number_concentration_pm_4_0"] = float(((data[37]<<24)+(data[38]<<16)+(data[39]<<8)+data[40])/100.00);
+      dataObject["number_concentration_pm_10_0"] = float(((data[41]<<24)+(data[42]<<16)+(data[43]<<8)+data[44])/100.00);
+      dataObject["typical_particle_size"] = float(((data[45]<<24)+(data[46]<<16)+(data[47]<<8)+data[48])/100.0);
+      dataObject["humidity"] = float(((data[49]*256)+data[50])/100.00);
+      dataObject["temperature"] = (float)(signedInt(data, 51, 16) / 100.00);
+      dataObject["co2"] = (float)((((data[53])<<24) + (data[54]<<16)+(data[55]<<8) + data[56])  /100.0);
       rDevice = true;
       break;
     }
@@ -851,6 +935,21 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       rDevice = true;
       break;
     }
+    case(62):{
+      if(len < 13){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "ORP Sensor";
+        json["SKU"] = "";
+      }
+      dataObject["orp"] = (float)(((data[9]) * 256) + data[10]);
+      int16_t unconverted = (data[11]<<8)+data[12];
+      dataObject["temperature"] = (float)(unconverted/100.00);
+      rDevice = true;
+      break;
+    }
+
     case(63):{
       Serial.println("New OPT/pH sensor transmission");
       if(len < 17){
@@ -880,38 +979,298 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       Serial.println("packet complete");
       break;
     }
-    case(502):{
+
+    case(67):{
+      Serial.println("PAR sensor");
+      if(len < 13){
+        Serial.printf("Packet length was %i\n", len);
+        return false;
+      }
       if(newDevice){
-        json["Type"] = "Vibration/Gyro/Magneto/Temperature";
+        json["Type"] = "PAR Sensor";
         json["SKU"] = "";
       }
-      //Vibration
-      dataObject["rms_x"] = (float)(signedInt(data, 9, 24)/100.00);
-      dataObject["rms_y"] = (float)(signedInt(data, 12, 24)/100.00);
-      dataObject["rms_z"] = (float)(signedInt(data, 15, 24)/100.00);
-      dataObject["max_x"] = (float)(signedInt(data, 18, 24)/100.00);
-      dataObject["max_y"] = (float)(signedInt(data, 21, 24)/100.00);
-      dataObject["max_z"] = (float)(signedInt(data, 24, 24)/100.00);
-      dataObject["min_x"] = (float)(signedInt(data, 27, 24)/100.00);
-      dataObject["min_y"] = (float)(signedInt(data, 30, 24)/100.00);
-      dataObject["min_z"] = (float)(signedInt(data, 33, 24)/100.00);
-      dataObject["temperature"] = (int16_t)(data[36]<<8)+data[37];
-      //Gyro/Magneto/Temperature
-      dataObject["accel_x"] = (float)(signedInt(data, 38, 24)/100.00);
-      dataObject["accel_y"] = (float)(signedInt(data, 41, 24)/100.00);
-      dataObject["accel_z"] = (float)(signedInt(data, 44, 24)/100.00);
-      dataObject["magneto_x"] = (float)(signedInt(data, 47, 24)/100.00);
-      dataObject["magneto_y"] = (float)(signedInt(data, 50, 24)/100.00);
-      dataObject["magneto_z"] = (float)(signedInt(data, 53, 24)/100.00);
-      dataObject["gyro_x"] = (float)(signedInt(data, 56, 24)/100.00);
-      dataObject["gyro_y"] = (float)(signedInt(data, 59, 24)/100.00);
-      dataObject["gyro_z"] = (float)(signedInt(data, 62, 24)/100.00);
-      dataObject["temperature"] = (int16_t)(data[65]<<8)+data[66];
+      //One Channel Counter
+      dataObject["PAR"] = (float)((data[9]<<24)+(data[10]<<16)+(data[11]<<8)+data[12])/100.00;
       rDevice = true;
       break;
     }
-    case(503):{
-      Serial.println("This is a 503 sensor");
+
+    case(69):{
+      if(len < 25){
+        Serial.printf("Sensor type 69, Length too short, it was: %i\n", len);
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "Soil Moisture Temperature and EC Sensor";
+        json["SKU"] = "";
+      }
+
+      dataObject["moisture"] = (float)((data[9]<<24)+(data[10]<<16)+(data[11]<<8)+data[12])/100.00;
+      dataObject["temperature_c"] = (float)((data[13]<<24)+(data[14]<<16)+(data[15]<<8)+data[16])/100.00;
+      dataObject["ec"] = (float)((data[13]<<17)+(data[18]<<16)+(data[19]<<8)+data[20])/100.00;
+      dataObject["salinity"] = (float)((data[21]<<17)+(data[22]<<16)+(data[23]<<8)+data[24])/100.00;
+
+      rDevice = true;
+      Serial.println("packet complete");
+      break;
+    }
+    case(80):{
+      if(len < 54){
+        return false;
+      }
+      int odr;
+      switch(data[9]){
+        case(6):{
+          odr = 50;
+        }
+        case(7):{
+          odr = 100;
+        }
+        case(8):{
+          odr = 200;
+        }
+        case(9):{
+          odr = 400;
+        }
+        case(10):{
+          odr = 800;
+        }
+        case(11):{
+          odr = 1600;
+        }
+        case(12):{
+          odr = 3200;
+        }
+        case(13):{
+          odr = 6400;
+        }
+        case(14):{
+          odr = 128000;
+        }
+      }
+      dataObject["odr"] = odr;
+      dataObject["temperature"] = (float)(signedInt(data, 10, 16)/100.00);
+
+      dataObject["x_rms_ACC_mg"] = (float)(signedInt(data, 12, 16)/1000.00);
+      dataObject["x_max_ACC_mg"] = (float)(signedInt(data, 14, 16)/1000.00);
+      dataObject["x_velocity_mm_sec"] = (float)(signedInt(data, 16, 16)/100.00);
+      dataObject["x_displacement_mm"] = (float)(signedInt(data, 18, 16)/100.00);
+      dataObject["x_peak_one_Hz"] = (int)(data[20]<<8+data[21]);
+      dataObject["x_peak_two_Hz"] = (int)(data[22]<<8+data[23]);
+      dataObject["x_peak_three_Hz"] = (int)(data[24]<<8+data[25]);
+
+      dataObject["y_rms_ACC_mg"] = (float)(signedInt(data, 26, 16)/1000.00);
+      dataObject["y_max_ACC_mg"] = (float)(signedInt(data, 28, 16)/1000.00);
+      dataObject["y_velocity_mm_sec"] = (float)(signedInt(data, 30, 16)/100.00);
+      dataObject["y_displacement_mm"] = (float)(signedInt(data, 32, 16)/100.00);
+      dataObject["y_peak_one_Hz"] = (int)(data[34]<<8+data[35]);
+      dataObject["y_peak_two_Hz"] = (int)(data[36]<<8+data[37]);
+      dataObject["y_peak_three_Hz"] = (int)(data[38]<<8+data[39]);
+
+      dataObject["z_rms_ACC_mg"] = (float)(signedInt(data, 40, 16)/1000.00);
+      dataObject["z_max_ACC_mg"] = (float)(signedInt(data, 42, 16)/1000.00);
+      dataObject["z_velocity_mm_sec"] = (float)(signedInt(data, 44, 16)/100.00);
+      dataObject["z_displacement_mm"] = (float)(signedInt(data, 46, 16)/100.00);
+      dataObject["z_peak_one_Hz"] = (int)(data[48]<<8+data[49]);
+      dataObject["z_peak_two_Hz"] = (int)(data[50]<<8+data[51]);
+      dataObject["z_peak_three_Hz"] = (int)(data[52]<<8+data[53]);
+      rDevice = true;
+      break;
+    }
+
+    case(81):{
+      if(len < 54){
+        return false;
+      }
+      int odr;
+      switch(data[9]){
+        case(6):{
+          odr = 50;
+        }
+        case(7):{
+          odr = 100;
+        }
+        case(8):{
+          odr = 200;
+        }
+        case(9):{
+          odr = 400;
+        }
+        case(10):{
+          odr = 800;
+        }
+        case(11):{
+          odr = 1600;
+        }
+        case(12):{
+          odr = 3200;
+        }
+        case(13):{
+          odr = 6400;
+        }
+        case(14):{
+          odr = 128000;
+        }
+      }
+      dataObject["odr_1"] = odr;
+      dataObject["temperature_1"] = (float)(signedInt(data, 10, 16)/100.00);
+
+      dataObject["x_rms_ACC_mg_1"] = (float)(signedInt(data, 12, 16)/1000.00);
+      dataObject["x_max_ACC_mg_1"] = (float)(signedInt(data, 14, 16)/1000.00);
+      dataObject["x_velocity_mm_sec_1"] = (float)(signedInt(data, 16, 16)/100.00);
+      dataObject["x_displacement_mm_1"] = (float)(signedInt(data, 18, 16)/100.00);
+      dataObject["x_peak_one_Hz_1"] = (int)(data[20]<<8+data[21]);
+      dataObject["x_peak_two_Hz_1"] = (int)(data[22]<<8+data[23]);
+      dataObject["x_peak_three_Hz_1"] = (int)(data[24]<<8+data[25]);
+
+      dataObject["y_rms_ACC_mg_1"] = (float)(signedInt(data, 26, 16)/1000.00);
+      dataObject["y_max_ACC_mg_1"] = (float)(signedInt(data, 28, 16)/1000.00);
+      dataObject["y_velocity_mm_sec_1"] = (float)(signedInt(data, 30, 16)/100.00);
+      dataObject["y_displacement_mm_1"] = (float)(signedInt(data, 32, 16)/100.00);
+      dataObject["y_peak_one_Hz_1"] = (int)(data[34]<<8+data[35]);
+      dataObject["y_peak_two_Hz_1"] = (int)(data[36]<<8+data[37]);
+      dataObject["y_peak_three_Hz_1"] = (int)(data[38]<<8+data[39]);
+
+      dataObject["z_rms_ACC_mg_1"] = (float)(signedInt(data, 40, 16)/1000.00);
+      dataObject["z_max_ACC_mg_1"] = (float)(signedInt(data, 42, 16)/1000.00);
+      dataObject["z_velocity_mm_sec_1"] = (float)(signedInt(data, 44, 16)/100.00);
+      dataObject["z_displacement_mm_1"] = (float)(signedInt(data, 46, 16)/100.00);
+      dataObject["z_peak_one_Hz_1"] = (int)(data[48]<<8+data[49]);
+      dataObject["z_peak_two_Hz_1"] = (int)(data[50]<<8+data[51]);
+      dataObject["z_peak_three_Hz_1"] = (int)(data[52]<<8+data[53]);
+
+      switch(data[54]){
+        case(6):{
+          odr = 50;
+        }
+        case(7):{
+          odr = 100;
+        }
+        case(8):{
+          odr = 200;
+        }
+        case(9):{
+          odr = 400;
+        }
+        case(10):{
+          odr = 800;
+        }
+        case(11):{
+          odr = 1600;
+        }
+        case(12):{
+          odr = 3200;
+        }
+        case(13):{
+          odr = 6400;
+        }
+        case(14):{
+          odr = 128000;
+        }
+      }
+      dataObject["odr_2"] = odr;
+      dataObject["temperature_2"] = (float)(signedInt(data, 55, 16)/100.00);
+
+      dataObject["x_rms_ACC_mg_2"] = (float)(signedInt(data, 57, 16)/1000.00);
+      dataObject["x_max_ACC_mg_2"] = (float)(signedInt(data, 59, 16)/1000.00);
+      dataObject["x_velocity_mm_sec_2"] = (float)(signedInt(data, 61, 16)/100.00);
+      dataObject["x_displacement_mm_2"] = (float)(signedInt(data, 63, 16)/100.00);
+      dataObject["x_peak_one_Hz_2"] = (int)(data[65]<<8+data[66]);
+      dataObject["x_peak_two_Hz_2"] = (int)(data[67]<<8+data[68]);
+      dataObject["x_peak_three_Hz_2"] = (int)(data[69]<<8+data[70]);
+
+      dataObject["y_rms_ACC_mg_2"] = (float)(signedInt(data, 71, 16)/1000.00);
+      dataObject["y_max_ACC_mg_2"] = (float)(signedInt(data, 73, 16)/1000.00);
+      dataObject["y_velocity_mm_sec_2"] = (float)(signedInt(data, 75, 16)/100.00);
+      dataObject["y_displacement_mm_2"] = (float)(signedInt(data, 77, 16)/100.00);
+      dataObject["y_peak_one_Hz_2"] = (int)(data[79]<<8+data[80]);
+      dataObject["y_peak_two_Hz_2"] = (int)(data[81]<<8+data[82]);
+      dataObject["y_peak_three_Hz_2"] = (int)(data[83]<<8+data[84]);
+
+      dataObject["z_rms_ACC_mg_2"] = (float)(signedInt(data, 85, 16)/1000.00);
+      dataObject["z_max_ACC_mg_2"] = (float)(signedInt(data, 87, 16)/1000.00);
+      dataObject["z_velocity_mm_sec_2"] = (float)(signedInt(data, 89, 16)/100.00);
+      dataObject["z_displacement_mm_2"] = (float)(signedInt(data, 91, 16)/100.00);
+      dataObject["z_peak_one_Hz_2"] = (int)(data[92]<<8+data[93]);
+      dataObject["z_peak_two_Hz_2"] = (int)(data[94]<<8+data[95]);
+      dataObject["z_peak_three_Hz_2"] = (int)(data[96]<<8+data[97]);
+
+      rDevice = true;
+      break;
+    }
+
+    case(200):{
+      if(len < 15){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "4-20 mA Transmitter/Receiver";
+        json["SKU"] = "";
+      }
+      dataObject["milliamp"] = (float)(((data[9]<<8)+data[10])/100.00);
+      dataObject["raw_adc"] = (data[11]<<8)+data[12];
+      dataObject["raw_dac"] = (data[13]<<8)+data[14];
+      rDevice = true;
+      break;
+    }
+
+    // case(502):{
+    //   if(newDevice){
+    //     json["Type"] = "Vibration/Gyro/Magneto/Temperature";
+    //     json["SKU"] = "";
+    //   }
+    //   //Vibration
+    //   dataObject["rms_x"] = (float)(signedInt(data, 9, 24)/100.00);
+    //   dataObject["rms_y"] = (float)(signedInt(data, 12, 24)/100.00);
+    //   dataObject["rms_z"] = (float)(signedInt(data, 15, 24)/100.00);
+    //   dataObject["max_x"] = (float)(signedInt(data, 18, 24)/100.00);
+    //   dataObject["max_y"] = (float)(signedInt(data, 21, 24)/100.00);
+    //   dataObject["max_z"] = (float)(signedInt(data, 24, 24)/100.00);
+    //   dataObject["min_x"] = (float)(signedInt(data, 27, 24)/100.00);
+    //   dataObject["min_y"] = (float)(signedInt(data, 30, 24)/100.00);
+    //   dataObject["min_z"] = (float)(signedInt(data, 33, 24)/100.00);
+    //   dataObject["temperature"] = (int16_t)(data[36]<<8)+data[37];
+    //   //Gyro/Magneto/Temperature
+    //   dataObject["accel_x"] = (float)(signedInt(data, 38, 24)/100.00);
+    //   dataObject["accel_y"] = (float)(signedInt(data, 41, 24)/100.00);
+    //   dataObject["accel_z"] = (float)(signedInt(data, 44, 24)/100.00);
+    //   dataObject["magneto_x"] = (float)(signedInt(data, 47, 24)/100.00);
+    //   dataObject["magneto_y"] = (float)(signedInt(data, 50, 24)/100.00);
+    //   dataObject["magneto_z"] = (float)(signedInt(data, 53, 24)/100.00);
+    //   dataObject["gyro_x"] = (float)(signedInt(data, 56, 24)/100.00);
+    //   dataObject["gyro_y"] = (float)(signedInt(data, 59, 24)/100.00);
+    //   dataObject["gyro_z"] = (float)(signedInt(data, 62, 24)/100.00);
+    //   dataObject["temperature"] = (int16_t)(data[65]<<8)+data[66];
+    //   rDevice = true;
+    //   break;
+    // }
+    case(502):{
+      if(data[8] == 0xAA){
+        JsonArray& dataArray = dataObject.createNestedArray("raw_data");
+        Serial.print("Copied: ");
+        for(int i = 9; i < len; i++){
+          dataArray.add(data[i]);
+        }
+        rDevice = true;
+        break;
+      }
+
+      Serial.println("503 Sensor");
+      float cTemp = (float)((((data[9])<<8)| data[10]) /100.0);
+      dataObject["temperature_c"]= cTemp;
+      dataObject["temperature_f"] = (float)(cTemp * 1.8 + 32);
+      dataObject["pressure"] = (float)((((data[11])<<24)+((data[12])<<16)+((data[13])<<8)+(data[14]))/100.00);
+      dataObject["humidity"] = (float)((((data[15])<<24)+((data[16])<<16)+((data[17])<<8)+(data[18]))/1000.00);
+      dataObject["gas_resistance"] = (float)((((data[19])<<24)+((data[20])<<16)+((data[21])<<8)+(data[22])));
+      dataObject["iaq"] = (float)((((data[23])<<8)+(data[24])));
+      dataObject["light"] = (float)((((data[25])<<8)+(data[26])));
+      dataObject["sound"] = (float)((data[27]));
+      rDevice = true;
+      break;
+    }
+    case(510):{
+      Serial.println("This is a 510 sensor");
       if(len < 11){
         Serial.printf("Packet too short, length is:%i\n",len);
         return false;
@@ -927,6 +1286,68 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       sprintf(data,"%0.2f",mA);
       dataObject["mA"] = data;
       Serial.printf("mA: %0.2f\n", mA);
+      rDevice = true;
+      break;
+    }
+
+    case(505):{
+      if(len < 18){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "Custom 1 Channel Current Monitor";
+        json["SKU"] = "";
+      }
+      dataObject["rms_current"] = (float)(((data[9]<<16)+(data[10]<<8)+data[11]));
+      dataObject["max_current"] = (float)(((data[13]<<16)+(data[14]<<8)+data[15]));
+      dataObject["minimum_current"] = (float)(((data[17]<<16)+(data[18]<<8)+data[19]));
+      // DynamicJsonBuffer jBuffer;
+      // JsonObject& lastHeardObject = jBuffer.parseObject(lastHeardString);
+      // String nodeKey = String(nodeID);
+      // if(lastHeardObject.containsKey(nodeKey)){
+      //   unsigned long last = lastHeardObject[nodeKey].as<unsigned long>();
+      //   dataObject["timestamp"] = millis() - last;
+      // }else{
+      //   dataObject["timestamp"] = 0;
+      // }
+      // lastHeardObject[nodeKey] = millis();
+      // lastHeardString = "";
+      // lastHeardObject.printTo(lastHeardString);
+      rDevice = true;
+      break;
+    }
+    case(506):{
+      if(len < 44){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "Custom 3 Channel Current Monitor";
+        json["SKU"] = "";
+      }
+      dataObject["rms_current_1"] = (float)(((data[9]<<16)+(data[10]<<8)+data[11]));
+      dataObject["max_current_1"] = (float)(((data[13]<<16)+(data[14]<<8)+data[15]));
+      dataObject["minimum_current_1"] = (float)(((data[17]<<16)+(data[18]<<8)+data[19]));
+
+      dataObject["rms_current_2"] = (float)(((data[21]<<16)+(data[22]<<8)+data[23]));
+      dataObject["max_current_2"] = (float)(((data[25]<<16)+(data[26]<<8)+data[27]));
+      dataObject["minimum_current_2"] = (float)(((data[29]<<16)+(data[30]<<8)+data[31]));
+
+      dataObject["rms_current_3"] = (float)(((data[33]<<16)+(data[34]<<8)+data[35]));
+      dataObject["max_current_3"] = (float)(((data[37]<<16)+(data[38]<<8)+data[39]));
+      dataObject["minimum_current_3"] = (float)(((data[41]<<16)+(data[42]<<8)+data[43]));
+
+      // DynamicJsonBuffer jBuffer;
+      // JsonObject& lastHeardObject = jBuffer.parseObject(lastHeardString);
+      // String nodeKey = String(nodeID);
+      // if(lastHeardObject.containsKey(nodeKey)){
+      //   unsigned long last = lastHeardObject[nodeKey].as<unsigned long>();
+      //   dataObject["timestamp"] = millis() - last;
+      // }else{
+      //   dataObject["timestamp"] = 0;
+      // }
+      // lastHeardObject[nodeKey] = millis();
+      // lastHeardString = "";
+      // lastHeardObject.printTo(lastHeardString);
       rDevice = true;
       break;
     }
