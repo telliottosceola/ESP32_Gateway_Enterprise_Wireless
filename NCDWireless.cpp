@@ -396,7 +396,7 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
         json["Type"] = "AMS Pressure & Temperature";
         json["SKU"] = "";
       }
-      dataObject["pressure_psi"] = (float)(signedInt(data, 9, 16)/100.00);
+      dataObject["pressure_psi"] = (float)(signedInt(data, 9, 16)/100.000);
       dataObject["temperature_c"] = (float)(signedInt(data, 11, 16)/100.00);
       rDevice = true;
       break;
@@ -414,7 +414,7 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       break;
     }
     case(23):{
-      if(len<21){
+      if(len<17){
         return false;
       }
       if(newDevice){
