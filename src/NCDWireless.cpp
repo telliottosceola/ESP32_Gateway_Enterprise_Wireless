@@ -936,13 +936,13 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       break;
     }
     case(60):{
-      float pressure = ((((data[9])<<24) + (data[10] <<16)+ (data[11] <<8)+ data[12]) /1000.0);
-      float pressure_inch = abs(pressure * 0.0040146);
+      dataObject["pressure"]  = float((((data[9])<<24) + (data[10] <<16)+ (data[11] <<8)+ data[12]) /1000.0);
+      dataObject["pressure_inch"] = float(abs(pressure * 0.0040146));
       float velocity = 4005 * sqrt(pressure_inch);
-      velocity = velocity * 0.00508;
-      float cTemp = (((data[13])<<8)| data[14]) /100.0;
-      float fTemp = cTemp * 1.8 + 32;
-      float flow = (((data[15])<<8)| data[16]) /1000.0;
+      dataObject["velocity"] = float(velocity * 0.00508);
+      dataObject["cTemp"] = float((((data[13])<<8)| data[14]) /100.0);
+      dataObject["fTemp"] = float(cTemp * 1.8 + 32);
+      dataObject["flow"] = float((((data[15])<<8)| data[16]) /1000.0);
       rDevice = true;
       break;
     }
