@@ -483,11 +483,11 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
           json["Type"] = "Environmental";
           json["SKU"] = "";
         }
-        dataObject["temperature"] = signedInt(data, 9, 16) / 100;
-        dataObject["pressure"] = ((data[11]<<24)+(data[12]<<16)+(data[13]<<8)+data[14]) / 100;
-        dataObject["humidity"] = ((data[15]<<24)+(data[16]<<16)+(data[17]<<8)+data[18]) / 1000;
-        dataObject["gas_resistance"] = ((data[19]<<24)+(data[20]<<16)+(data[21]<<8)+data[22]);
-        dataObject["iaq"] = (data[23]<<8)+data[24];
+        dataObject["temperature"] = (float)signedInt(data, 9, 16) / 100.00;
+        dataObject["pressure"] = (float)((data[11]<<24)+(data[12]<<16)+(data[13]<<8)+data[14]) / 100.00;
+        dataObject["humidity"] = (float)((data[15]<<24)+(data[16]<<16)+(data[17]<<8)+data[18]) / 1000.00;
+        dataObject["gas_resistance"] = (float)((data[19]<<24)+(data[20]<<16)+(data[21]<<8)+data[22]);
+        dataObject["iaq"] = (float)(data[23]<<8)+data[24];
         rDevice = true;
         break;
     }
