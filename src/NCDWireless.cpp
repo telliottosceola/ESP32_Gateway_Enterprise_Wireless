@@ -580,6 +580,19 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       rDevice = true;
       break;
     }
+    case(33):{
+      if(len < 11){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "Current Detection Sensor";
+        json["SKU"] = "";
+      }
+      //2 channel Push Notification
+      dataObject["current_detected"] = data[9];
+      rDevice = true;
+      break;
+    }
     case(34):{
       if(len < 13){
         return false;
@@ -1470,6 +1483,10 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       // lastHeardObject.printTo(lastHeardString);
       rDevice = true;
       break;
+    }
+
+    case(515):{
+
     }
 
     case(10006):{
