@@ -1042,6 +1042,23 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       Serial.println("packet complete");
       break;
     }
+    case(76):{
+      if(len < 17){
+        Serial.printf("Type 76 Length too short, it was: %i\n", len);
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "Wireless CO Sensor";
+        json["SKU"] = "";
+      }
+
+      dataObject["adc"] = data[9]<<8+data[10];
+      dataObject["mA"] = (float)(data[11]<<8+data[12])/100.00;
+      dataObject["CO_ppm"] = (float)((data[13]<<24)+(data[14]<<16)+(data[15]<<8)+data[16])/100.00;
+      rDevice = true;
+      Serial.println("packet complete");
+      break;
+    }
     case(80):{
       if(len < 55){
         return false;
