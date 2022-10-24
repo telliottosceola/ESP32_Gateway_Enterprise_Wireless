@@ -713,7 +713,8 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
         json["Type"] = "0-24 Voltage Monitor";
         json["SKU"] = "";
       }
-      dataObject["Voltage"] = (float)(((int16_t)((data[9]<<8)+data[10]))* 0.02742);
+      dataObject["Voltage"] = (float)(((int16_t)((data[9]<<8)+data[10]))* 0.03824);
+      dataObject["ADC"] = (int16_t)((data[9]<<8)+data[10]);
       rDevice = true;
       break;
     }
@@ -942,8 +943,8 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
         json["Type"] = "pH Sensor";
         json["SKU"] = "";
       }
-      dataObject["pH"] = float(((data[9]<<24)+(data[10]<<16)+(data[11]<<8)+data[12])/1000.00);
-      int16_t unconverted = (data[13]<<8)+data[14];
+      dataObject["pH"] = float(((data[9]<<8)+data[10])/100.00);
+      int16_t unconverted = (data[11]<<8)+data[12];
       dataObject["temperature"] = (float)(unconverted/100.00);
       rDevice = true;
       break;
