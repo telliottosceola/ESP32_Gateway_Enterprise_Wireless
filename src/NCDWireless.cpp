@@ -936,7 +936,7 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
     }
 
     case(61):{
-      if(len < 15){
+      if(len < 13){
         return false;
       }
       if(newDevice){
@@ -1002,6 +1002,100 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       dataObject["temperature_orp"] = cTemp_ORP;
       dataObject["solution_ph"] = pH;
       dataObject["temperature_ph"] = cTemp_pH;
+
+      rDevice = true;
+      Serial.println("packet complete");
+      break;
+    }
+
+    case(64):{
+      if(len < 23){
+        Serial.printf("Length too short, it was: %i\n", len);
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "EC Salinity TDS and Temperature Sensor";
+        json["SKU"] = "";
+      }
+      int32_t EC_int = (data[9]<<24)+(data[10]<<16)+(data[11]<<8)+data[12];
+      int32_t TDS_int = (data[13]<<24)+(data[14]<<16)+(data[15]<<8)+data[16];
+      int32_t Salinity_int = (data[17]<<24)+(data[18]<<16)+(data[19]<<8)+data[20];
+      int16_t Temp_int = (data[21]<<8)+data[22];
+
+      float EC = (float)EC_int/100.00;
+      float TDS = (float)TDS_int/100.00;
+      float Salinity = (float)Salinity_int/100.00;
+      float Temp = (float)Temp_int/100.00;
+
+      dataObject["EC"] = EC;
+      dataObject["TDS"] = TDS;
+      dataObject["Salinity"] = Salinity;
+      dataObject["Temperature"] = Temp;
+
+      rDevice = true;
+      Serial.println("packet complete");
+      break;
+    }
+
+    case(65):{
+      if(len < 19){
+        Serial.printf("Length too short, it was: %i\n", len);
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "Dissolved Oxygen and Temperature Sensor";
+        json["SKU"] = "";
+      }
+      int32_t DO_int = (data[9]<<24)+(data[10]<<16)+(data[11]<<8)+data[12];
+      int32_t DO_Sat_int = (data[13]<<24)+(data[14]<<16)+(data[15]<<8)+data[16];
+      int16_t Temp_int = (data[17]<<8)+data[18];
+
+      float DO = (float)DO_int/100.00;
+      float DO_Sat = (float)DO_Sat_int/100.00;
+      float Temp = (float)Temp_int/100.00;
+
+      dataObject["DO"] = DO;
+      dataObject["DO_Saturation"] = DO_Sat;
+      dataObject["Temperature"] = Temp;
+
+      rDevice = true;
+      Serial.println("packet complete");
+      break;
+    }
+
+    case(66):{
+      if(len < 33){
+        Serial.printf("Length too short, it was: %i\n", len);
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "EC Dissolved Oxygen and Temperature Sensor";
+        json["SKU"] = "";
+      }
+      int32_t EC_int = (data[9]<<24)+(data[10]<<16)+(data[11]<<8)+data[12];
+      int32_t TDS_int = (data[13]<<24)+(data[14]<<16)+(data[15]<<8)+data[16];
+      int32_t Salinity_int = (data[17]<<24)+(data[18]<<16)+(data[19]<<8)+data[20];
+      int16_t Temp_int = (data[21]<<8)+data[22];
+
+      int32_t DO_int = (data[23]<<24)+(data[24]<<16)+(data[25]<<8)+data[26];
+      int32_t DO_Sat_int = (data[27]<<24)+(data[28]<<16)+(data[29]<<8)+data[30];
+      int16_t DO_Temp_int = (data[31]<<8)+data[32];
+
+      float EC = (float)EC_int/100.00;
+      float TDS = (float)TDS_int/100.00;
+      float Salinity = (float)Salinity_int/100.00;
+      float Temp = (float)Temp_int/100.00;
+      float DO = (float)DO_int/100.00;
+      float DO_Sat = (float)DO_Sat_int/100.00;
+      float DO_Temp = (float)DO_Temp_int/100.00;
+
+      dataObject["EC"] = EC;
+      dataObject["TDS"] = TDS;
+      dataObject["Salinity"] = Salinity;
+      dataObject["Temperature"] = Temp;
+      dataObject["DO"] = DO;
+      dataObject["DO_Saturation"] = DO_Sat;
+      dataObject["DO_Temperature"] = DO_Temp;
 
       rDevice = true;
       Serial.println("packet complete");
