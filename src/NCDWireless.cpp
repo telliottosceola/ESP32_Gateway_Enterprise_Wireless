@@ -43,9 +43,11 @@ int signedInt(uint8_t* data, int start, int bits){
 
 bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDevice, bool addNodeID, bool addBatteryLevel){
   if(data[0] != 127){
+    Serial.println("Not an NCD Device");
     return false;
   }
   if(len < 9){
+    Serial.println("Packet too short");
     return false;
   }
 
@@ -463,6 +465,7 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       break;
     }
     case(26):{
+      // Serial.println("Pressure sensor");
       if(len < 15){
         return false;
       }
@@ -1138,7 +1141,8 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       break;
     }
     case(76):{
-      if(len < 17){
+      Serial.println("Transmission from type 76 sensor");
+      if(len < 11){
         Serial.printf("Type 76 Length too short, it was: %i\n", len);
         return false;
       }
@@ -1146,10 +1150,18 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
         json["Type"] = "Wireless CO Sensor";
         json["SKU"] = "";
       }
+      if(firmware > 5){
+        dataObject["CO_ppm"] = (float)(data[9]<<8+data[10])/100.00;
+        // dataObject["CO_ppm"] = data[9]<<8+data[10];
+      }else{
+        if(len < 17){
+          return false;
+        }
+        dataObject["adc"] = data[9]<<8+data[10];
+        dataObject["mA"] = (float)(data[11]<<8+data[12])/100.00;
+        dataObject["CO_ppm"] = (float)(signedInt(data, 13, 32)/100.00);
+      }
 
-      dataObject["adc"] = data[9]<<8+data[10];
-      dataObject["mA"] = (float)(data[11]<<8+data[12])/100.00;
-      dataObject["CO_ppm"] = (float)((data[13]<<24)+(data[14]<<16)+(data[15]<<8)+data[16])/100.00;
       rDevice = true;
       Serial.println("packet complete");
       break;
@@ -1229,11 +1241,13 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
     }
 
     case(81):{
-      if(len < 54){
+      if(len < 100){
+        Serial.println("transmission from 2 channel vibration sensor too short.");
         return false;
       }
+      Serial.println("Message from 2 channel vibration sensor received");
       int odr;
-      switch(data[9]){
+      switch(data[10]){
         case(6):{
           odr = 50;
           break;
@@ -1272,33 +1286,33 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
         }
       }
       dataObject["odr_1"] = odr;
-      dataObject["temperature_1"] = (float)(signedInt(data, 10, 16)/100.00);
+      dataObject["temperature_1"] = (float)(signedInt(data, 11, 16)/100.00);
 
-      dataObject["x_rms_ACC_mg_1"] = (float)(signedInt(data, 12, 16)/1000.00);
-      dataObject["x_max_ACC_mg_1"] = (float)(signedInt(data, 14, 16)/1000.00);
-      dataObject["x_velocity_mm_sec_1"] = (float)(signedInt(data, 16, 16)/100.00);
-      dataObject["x_displacement_mm_1"] = (float)(signedInt(data, 18, 16)/100.00);
-      dataObject["x_peak_one_Hz_1"] = (int)(data[20]<<8+data[21]);
-      dataObject["x_peak_two_Hz_1"] = (int)(data[22]<<8+data[23]);
-      dataObject["x_peak_three_Hz_1"] = (int)(data[24]<<8+data[25]);
+      dataObject["x_rms_ACC_mg_1"] = (float)(signedInt(data, 13, 16)/1000.00);
+      dataObject["x_max_ACC_mg_1"] = (float)(signedInt(data, 15, 16)/1000.00);
+      dataObject["x_velocity_mm_sec_1"] = (float)(signedInt(data, 17, 16)/100.00);
+      dataObject["x_displacement_mm_1"] = (float)(signedInt(data, 19, 16)/100.00);
+      dataObject["x_peak_one_Hz_1"] = (int)(data[21]<<8+data[22]);
+      dataObject["x_peak_two_Hz_1"] = (int)(data[23]<<8+data[24]);
+      dataObject["x_peak_three_Hz_1"] = (int)(data[25]<<8+data[26]);
 
-      dataObject["y_rms_ACC_mg_1"] = (float)(signedInt(data, 26, 16)/1000.00);
-      dataObject["y_max_ACC_mg_1"] = (float)(signedInt(data, 28, 16)/1000.00);
-      dataObject["y_velocity_mm_sec_1"] = (float)(signedInt(data, 30, 16)/100.00);
-      dataObject["y_displacement_mm_1"] = (float)(signedInt(data, 32, 16)/100.00);
-      dataObject["y_peak_one_Hz_1"] = (int)(data[34]<<8+data[35]);
-      dataObject["y_peak_two_Hz_1"] = (int)(data[36]<<8+data[37]);
-      dataObject["y_peak_three_Hz_1"] = (int)(data[38]<<8+data[39]);
+      dataObject["y_rms_ACC_mg_1"] = (float)(signedInt(data, 27, 16)/1000.00);
+      dataObject["y_max_ACC_mg_1"] = (float)(signedInt(data, 29, 16)/1000.00);
+      dataObject["y_velocity_mm_sec_1"] = (float)(signedInt(data, 31, 16)/100.00);
+      dataObject["y_displacement_mm_1"] = (float)(signedInt(data, 33, 16)/100.00);
+      dataObject["y_peak_one_Hz_1"] = (int)(data[35]<<8+data[36]);
+      dataObject["y_peak_two_Hz_1"] = (int)(data[37]<<8+data[38]);
+      dataObject["y_peak_three_Hz_1"] = (int)(data[39]<<8+data[40]);
 
-      dataObject["z_rms_ACC_mg_1"] = (float)(signedInt(data, 40, 16)/1000.00);
-      dataObject["z_max_ACC_mg_1"] = (float)(signedInt(data, 42, 16)/1000.00);
-      dataObject["z_velocity_mm_sec_1"] = (float)(signedInt(data, 44, 16)/100.00);
-      dataObject["z_displacement_mm_1"] = (float)(signedInt(data, 46, 16)/100.00);
-      dataObject["z_peak_one_Hz_1"] = (int)(data[48]<<8+data[49]);
-      dataObject["z_peak_two_Hz_1"] = (int)(data[50]<<8+data[51]);
-      dataObject["z_peak_three_Hz_1"] = (int)(data[52]<<8+data[53]);
+      dataObject["z_rms_ACC_mg_1"] = (float)(signedInt(data, 41, 16)/1000.00);
+      dataObject["z_max_ACC_mg_1"] = (float)(signedInt(data, 43, 16)/1000.00);
+      dataObject["z_velocity_mm_sec_1"] = (float)(signedInt(data, 45, 16)/100.00);
+      dataObject["z_displacement_mm_1"] = (float)(signedInt(data, 47, 16)/100.00);
+      dataObject["z_peak_one_Hz_1"] = (int)(data[49]<<8+data[50]);
+      dataObject["z_peak_two_Hz_1"] = (int)(data[51]<<8+data[52]);
+      dataObject["z_peak_three_Hz_1"] = (int)(data[53]<<8+data[54]);
 
-      switch(data[54]){
+      switch(data[55]){
         case(6):{
           odr = 50;
           break;
@@ -1337,31 +1351,31 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
         }
       }
       dataObject["odr_2"] = odr;
-      dataObject["temperature_2"] = (float)(signedInt(data, 55, 16)/100.00);
+      dataObject["temperature_2"] = (float)(signedInt(data, 56, 16)/100.00);
 
-      dataObject["x_rms_ACC_mg_2"] = (float)(signedInt(data, 57, 16)/1000.00);
-      dataObject["x_max_ACC_mg_2"] = (float)(signedInt(data, 59, 16)/1000.00);
-      dataObject["x_velocity_mm_sec_2"] = (float)(signedInt(data, 61, 16)/100.00);
-      dataObject["x_displacement_mm_2"] = (float)(signedInt(data, 63, 16)/100.00);
-      dataObject["x_peak_one_Hz_2"] = (int)(data[65]<<8+data[66]);
-      dataObject["x_peak_two_Hz_2"] = (int)(data[67]<<8+data[68]);
-      dataObject["x_peak_three_Hz_2"] = (int)(data[69]<<8+data[70]);
+      dataObject["x_rms_ACC_mg_2"] = (float)(signedInt(data, 58, 16)/1000.00);
+      dataObject["x_max_ACC_mg_2"] = (float)(signedInt(data, 60, 16)/1000.00);
+      dataObject["x_velocity_mm_sec_2"] = (float)(signedInt(data, 62, 16)/100.00);
+      dataObject["x_displacement_mm_2"] = (float)(signedInt(data, 64, 16)/100.00);
+      dataObject["x_peak_one_Hz_2"] = (int)(data[66]<<8+data[67]);
+      dataObject["x_peak_two_Hz_2"] = (int)(data[68]<<8+data[69]);
+      dataObject["x_peak_three_Hz_2"] = (int)(data[70]<<8+data[71]);
 
-      dataObject["y_rms_ACC_mg_2"] = (float)(signedInt(data, 71, 16)/1000.00);
-      dataObject["y_max_ACC_mg_2"] = (float)(signedInt(data, 73, 16)/1000.00);
-      dataObject["y_velocity_mm_sec_2"] = (float)(signedInt(data, 75, 16)/100.00);
-      dataObject["y_displacement_mm_2"] = (float)(signedInt(data, 77, 16)/100.00);
-      dataObject["y_peak_one_Hz_2"] = (int)(data[79]<<8+data[80]);
-      dataObject["y_peak_two_Hz_2"] = (int)(data[81]<<8+data[82]);
-      dataObject["y_peak_three_Hz_2"] = (int)(data[83]<<8+data[84]);
+      dataObject["y_rms_ACC_mg_2"] = (float)(signedInt(data, 72, 16)/1000.00);
+      dataObject["y_max_ACC_mg_2"] = (float)(signedInt(data, 74, 16)/1000.00);
+      dataObject["y_velocity_mm_sec_2"] = (float)(signedInt(data, 76, 16)/100.00);
+      dataObject["y_displacement_mm_2"] = (float)(signedInt(data, 78, 16)/100.00);
+      dataObject["y_peak_one_Hz_2"] = (int)(data[80]<<8+data[81]);
+      dataObject["y_peak_two_Hz_2"] = (int)(data[82]<<8+data[83]);
+      dataObject["y_peak_three_Hz_2"] = (int)(data[84]<<8+data[85]);
 
-      dataObject["z_rms_ACC_mg_2"] = (float)(signedInt(data, 85, 16)/1000.00);
-      dataObject["z_max_ACC_mg_2"] = (float)(signedInt(data, 87, 16)/1000.00);
-      dataObject["z_velocity_mm_sec_2"] = (float)(signedInt(data, 89, 16)/100.00);
-      dataObject["z_displacement_mm_2"] = (float)(signedInt(data, 91, 16)/100.00);
-      dataObject["z_peak_one_Hz_2"] = (int)(data[92]<<8+data[93]);
-      dataObject["z_peak_two_Hz_2"] = (int)(data[94]<<8+data[95]);
-      dataObject["z_peak_three_Hz_2"] = (int)(data[96]<<8+data[97]);
+      dataObject["z_rms_ACC_mg_2"] = (float)(signedInt(data, 86, 16)/1000.00);
+      dataObject["z_max_ACC_mg_2"] = (float)(signedInt(data, 88, 16)/1000.00);
+      dataObject["z_velocity_mm_sec_2"] = (float)(signedInt(data, 90, 16)/100.00);
+      dataObject["z_displacement_mm_2"] = (float)(signedInt(data, 92, 16)/100.00);
+      dataObject["z_peak_one_Hz_2"] = (int)(data[94]<<8+data[95]);
+      dataObject["z_peak_two_Hz_2"] = (int)(data[96]<<8+data[97]);
+      dataObject["z_peak_three_Hz_2"] = (int)(data[98]<<8+data[99]);
 
       rDevice = true;
       break;
@@ -1444,6 +1458,82 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       rDevice = true;
       break;
     }
+
+    case(84):{
+      if(len < 55){
+        return false;
+      }
+      int odr;
+      dataObject["mode"] = data[9];
+      switch(data[10]){
+        case(6):{
+          odr = 50;
+          break;
+        }
+        case(7):{
+          odr = 100;
+          break;
+        }
+        case(8):{
+          odr = 200;
+          break;
+        }
+        case(9):{
+          odr = 400;
+          break;
+        }
+        case(10):{
+          odr = 800;
+          break;
+        }
+        case(11):{
+          odr = 1600;
+          break;
+        }
+        case(12):{
+          odr = 3200;
+          break;
+        }
+        case(13):{
+          odr = 6400;
+          break;
+        }
+        case(14):{
+          odr = 128000;
+          break;
+        }
+      }
+      dataObject["odr"] = odr;
+      dataObject["temperature"] = (float)(signedInt(data, 11, 16)/100.00);
+
+      dataObject["x_rms_ACC_mg"] = (float)(signedInt(data, 13, 16)/1000.00);
+      dataObject["x_max_ACC_mg"] = (float)(signedInt(data, 15, 16)/1000.00);
+      dataObject["x_velocity_mm_sec"] = (float)(signedInt(data, 17, 16)/100.00);
+      dataObject["x_displacement_mm"] = (float)(signedInt(data, 19, 16)/100.00);
+      dataObject["x_peak_one_Hz"] = (int)(data[21]<<8+data[22]);
+      dataObject["x_peak_two_Hz"] = (int)(data[23]<<8+data[24]);
+      dataObject["x_peak_three_Hz"] = (int)(data[25]<<8+data[26]);
+
+      dataObject["y_rms_ACC_mg"] = (float)(signedInt(data, 27, 16)/1000.00);
+      dataObject["y_max_ACC_mg"] = (float)(signedInt(data, 29, 16)/1000.00);
+      dataObject["y_velocity_mm_sec"] = (float)(signedInt(data, 31, 16)/100.00);
+      dataObject["y_displacement_mm"] = (float)(signedInt(data, 33, 16)/100.00);
+      dataObject["y_peak_one_Hz"] = (int)(data[35]<<8+data[36]);
+      dataObject["y_peak_two_Hz"] = (int)(data[37]<<8+data[38]);
+      dataObject["y_peak_three_Hz"] = (int)(data[39]<<8+data[40]);
+
+      dataObject["z_rms_ACC_mg"] = (float)(signedInt(data, 41, 16)/1000.00);
+      dataObject["z_max_ACC_mg"] = (float)(signedInt(data, 43, 16)/1000.00);
+      dataObject["z_velocity_mm_sec"] = (float)(signedInt(data, 45, 16)/100.00);
+      dataObject["z_displacement_mm"] = (float)(signedInt(data, 47, 16)/100.00);
+      dataObject["z_peak_one_Hz"] = (int)(data[49]<<8+data[50]);
+      dataObject["z_peak_two_Hz"] = (int)(data[51]<<8+data[52]);
+      dataObject["z_peak_three_Hz"] = (int)(data[53]<<8+data[54]);
+      rDevice = true;
+      break;
+    }
+
+
 
     case(200):{
       if(len < 15){
@@ -1599,6 +1689,32 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
 
     case(515):{
 
+    }
+
+    case(600):{
+      //Gateway
+      if(len < 9){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "Gateway";
+        json["SKU"] = "";
+      }
+      rDevice = true;
+      break;
+    }
+
+    case(601):{
+      //Repeater
+      if(len < 9){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "Repeater";
+        json["SKU"] = "";
+      }
+      rDevice = true;
+      break;
     }
 
     case(10006):{
