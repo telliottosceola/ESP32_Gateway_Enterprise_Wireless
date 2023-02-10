@@ -783,6 +783,20 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       rDevice = true;
       break;
     }
+    case(47):{
+      if(len < 11){
+        return false;
+      }
+      if(newDevice){
+        json["Type"] = "Wireless Tilt Sensor";
+        json["SKU"] = "";
+      }
+      //2 channel Push Notification
+      dataObject["roll"] = (float)((data[9]<<8)+data[10])/100.00;
+      dataObject["pitch"] = (float)((data[11]<<8)+data[12])/100.00;
+      rDevice = true;
+      break;
+    }
     case(48):{
       if(len < 13){
         return false;
