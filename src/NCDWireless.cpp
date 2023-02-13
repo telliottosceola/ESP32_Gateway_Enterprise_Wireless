@@ -792,8 +792,8 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
         json["SKU"] = "";
       }
       //2 channel Push Notification
-      dataObject["roll"] = (float)((data[9]<<8)+data[10])/100.00;
-      dataObject["pitch"] = (float)((data[11]<<8)+data[12])/100.00;
+      dataObject["roll"] = (float)(signedInt(data, 9, 16))/100.00;
+      dataObject["pitch"] = (float)(signedInt(data, 11, 16))/100.00;
       rDevice = true;
       break;
     }
