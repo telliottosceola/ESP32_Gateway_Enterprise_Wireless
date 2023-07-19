@@ -1442,7 +1442,7 @@ bool NCDWireless::parseData(uint8_t* data, int len, JsonObject& json, bool newDe
       dataObject["odr"] = odr;
       dataObject["temperature"] = (float)(signedInt(data, 11, 16)/100.00);
 
-      dataObject["thermocouple_temperature"] = float(signedInt(data,13,24)/100.00);
+      dataObject["thermocouple_temperature"] = float(signedInt(data,13,32)/100.00);
 
       dataObject["current"] = float((data[16]<<16+data[17]<<8+data[18])/1000.00);
 
